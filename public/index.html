@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Manager</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f7;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #1d1d1f;
+            margin-bottom: 10px;
+        }
+        
+        .instructions {
+            color: #86868b;
+            margin-bottom: 30px;
+            text-align: center;
+            line-height: 1.5;
+        }
+        
+        .contact-display {
+            text-align: center;
+            padding: 40px 20px;
+            border: 2px solid #f0f0f0;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .contact-name {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 10px;
+        }
+        
+        .contact-info {
+            color: #86868b;
+            margin-bottom: 20px;
+        }
+        
+        .contact-number {
+            color: #3a3a3c;
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-delete {
+            background-color: #ff3b30;
+            color: white;
+        }
+        
+        .btn-delete:hover {
+            background-color: #d70015;
+        }
+        
+        .btn-skip {
+            background-color: #007aff;
+            color: white;
+        }
+        
+        .btn-skip:hover {
+            background-color: #0051d5;
+        }
+        
+        .status {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            background-color: #d1e7dd;
+            color: #0f5132;
+            border: 1px solid #badbcc;
+        }
+        
+        .status.error {
+            background-color: #f8d7da;
+            color: #842029;
+            border: 1px solid #f5c2c7;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #86868b;
+            font-style: italic;
+        }
+        
+        .progress {
+            text-align: center;
+            color: #86868b;
+            margin-bottom: 20px;
+        }
+        
+        .keyboard-hint {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Contact Manager</h1>
+            <div class="instructions">
+                Review your contacts one by one. Press <strong>'D'</strong> to delete, <strong>'S'</strong> to skip, or use the buttons below.
+            </div>
+        </div>
+        
+        <div class="progress" id="progress">Loading contacts...</div>
+        
+        <div class="contact-display" id="contactDisplay">
+            <div class="loading">Loading your contacts...</div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-delete" id="deleteBtn" onclick="deleteContact()" disabled>
+                Delete Contact (D)
+            </button>
+            <button class="btn btn-skip" id="skipBtn" onclick="skipContact()" disabled>
+                Skip Contact (S)
+            </button>
+        </div>
+        
+        <div class="status" id="status" style="display: none;"></div>
+    </div>
+    
+    <div class="keyboard-hint">
+        Press D to Delete | Press S to Skip
+    </div>
+
+    <script>
+        let contacts = [];
+        let currentIndex = 0;
+        
+        // Load contacts when page loads
+        document.addEventListener('DOMContentLoaded', loadContacts);
+        
+        // Handle keyboard events
+        document.addEventListener('keydown', function(event) {
+            if (event.key.toLowerCase() === 'd') {
+                deleteContact();
+            } else if (event.key.toLowerCase() === 's') {
+                skipContact();
+            }
+        });
+        
+        async function loadContacts() {
+            try {
+                const response = await fetch('/api/contacts');
+                if (!response.ok) throw new Error('Failed to load contacts');
+                
+                contacts = await response.json();
+                currentIndex = 0;
+                
+                if (contacts.length === 0) {
+                    showMessage('No contacts found!', 'success');
+                    document.getElementById('contactDisplay').innerHTML = '<div class="contact-name">No contacts to review</div>';
+                    return;
+                }
+                
+                displayCurrentContact();
+                updateProgress();
+                enableButtons();
+            } catch (error) {
+                console.error('Error loading contacts:', error);
+                showMessage('Error loading contacts: ' + error.message, 'error');
+            }
+        }
+        
+        function displayCurrentContact() {
+            if (currentIndex >= contacts.length) {
+                document.getElementById('contactDisplay').innerHTML = '<div class="contact-name">All contacts reviewed!</div>';
+                document.getElementById('progress').textContent = 'Review complete!';
+                disableButtons();
+                return;
+            }
+            
+            const contact = contacts[currentIndex];
+            document.getElementById('contactDisplay').innerHTML = `
+                <div class=\"contact-name\">${escapeHtml(contact.name)}</div>
+                ${contact.phone ? `<div class=\"contact-number\">${escapeHtml(contact.phone)}</div>` : `<div class=\"contact-number\" style=\"color:#c7c7cc;\">No phone number</div>`}
+                <div class=\"contact-info\">Contact ${currentIndex + 1} of ${contacts.length}</div>
+            `;
+        }
+        
+        function updateProgress() {
+            const progress = document.getElementById('progress');
+            if (currentIndex >= contacts.length) {
+                progress.textContent = 'Review complete!';
+            } else {
+                progress.textContent = `Contact ${currentIndex + 1} of ${contacts.length}`;
+            }
+        }
+        
+        async function deleteContact() {
+            if (currentIndex >= contacts.length) return;
+            
+            const contact = contacts[currentIndex];
+            
+            try {
+                const response = await fetch(`/api/contacts/${encodeURIComponent(contact.id)}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage(`Deleted: ${contact.name}`, 'success');
+                    contacts.splice(currentIndex, 1); // Remove from array
+                } else {
+                    showMessage(`Error deleting ${contact.name}: ${result.message}`, 'error');
+                    currentIndex++; // Move to next contact even if delete failed
+                }
+                
+                displayCurrentContact();
+                updateProgress();
+                
+            } catch (error) {
+                console.error('Error deleting contact:', error);
+                showMessage('Error deleting contact: ' + error.message, 'error');
+            }
+        }
+        
+        function skipContact() {
+            if (currentIndex >= contacts.length) return;
+            
+            const contact = contacts[currentIndex];
+            showMessage(`Skipped: ${contact.name}`, 'success');
+            currentIndex++;
+            displayCurrentContact();
+            updateProgress();
+        }
+        
+        function showMessage(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+        
+        function enableButtons() {
+            document.getElementById('deleteBtn').disabled = false;
+            document.getElementById('skipBtn').disabled = false;
+        }
+        
+        function disableButtons() {
+            document.getElementById('deleteBtn').disabled = true;
+            document.getElementById('skipBtn').disabled = true;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

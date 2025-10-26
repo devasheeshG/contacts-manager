@@ -1,0 +1,15 @@
+{
+  "name": "contact-manager",
+  "version": "1.0.0",
+  "description": "Simple contact manager with keyboard shortcuts",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "keywords": ["contacts", "applescript", "macos"],
+  "author": "",
+  "license": "MIT"
+}
