@@ -1,47 +1,111 @@
-# Contact Manager
+# Contact Manager - Next.js Edition
 
-A simple web-based contact manager for macOS that allows you to quickly review and delete contacts using keyboard shortcuts.
+A modern contact management app for macOS with hot reload, built with Next.js, TypeScript, and Tailwind CSS.
 
 ## Features
 
-- Shows contacts one by one for easy review
-- Press 'D' to delete the current contact
-- Press 'S' to skip to the next contact
-- Clean, modern web interface
-- Uses AppleScript to interact with the macOS Contacts app
+- ✨ **Modern Stack**: Next.js 14, TypeScript, Tailwind CSS
+- 🔥 **Hot Reload**: Instant updates during development
+- ⚡ **Batch Loading**: Fast initial load with progressive background loading
+- 📱 **Full Contact Details**: Name, company, phones (all), emails (all)
+- ⌨️ **Keyboard Shortcuts**: Navigate with D, S, and arrow keys
+- 🎯 **Smart Navigation**: Jump to any contact, undo deletions
+- 📝 **Inline Editing**: Edit names, phones, emails, and company
+- 🎨 **Beautiful UI**: Clean design with Tailwind CSS
 
 ## Setup
 
-1. Make sure you have Node.js installed on your Mac
-2. Navigate to the contact-manager directory
-3. Install dependencies: `npm install`
-4. Start the server: `npm start`
-5. Open your browser and go to `http://localhost:3000`
+### 1. Install Dependencies
 
-## Usage
+```bash
+npm install
+```
 
-1. The app will load all your contacts automatically
-2. Review each contact displayed on screen
-3. Use keyboard shortcuts:
-   - Press 'D' to delete the current contact
-   - Press 'S' to skip to the next contact
-4. Or use the buttons on screen
-5. Progress is shown at the top of the screen
+### 2. Run Development Server
 
-## Important Notes
+```bash
+npm run dev
+```
 
-- **Backup your contacts first!** This app permanently deletes contacts from your macOS Contacts app
-- You may need to grant permission for Terminal/Node.js to access your Contacts when first running the app
-- The app works by executing AppleScript commands to interact with the Contacts app
-- Deleted contacts cannot be easily recovered, so use with caution
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Files
+## Features in Detail
 
-- `server.js` - Node.js server that handles API requests and executes AppleScripts
-- `get_contacts.scpt` - AppleScript to retrieve all contacts
-- `delete_contact.scpt` - AppleScript to delete a specific contact
-- `public/index.html` - Web interface for the contact manager
+### Contact Information Displayed
 
-## Stopping the App
+- **Name** - Editable with inline editing
+- **Company** - Displayed if available
+- **Phone Numbers** - All phone numbers with labels (mobile, home, work, etc.)
+- **Email Addresses** - All email addresses with labels
+- **Edit Any Field** - Click the ✏️ icon next to any field
 
-Press `Ctrl+C` in the terminal where you started the server to stop the application.
+### Keyboard Shortcuts
+
+- `D` - Delete contact (with 5-second undo window)
+- `S` - Skip to next contact
+- `←` - Previous contact
+- `→` - Next contact
+- `Enter` - Jump to contact (when in jump field)
+
+### Smart Features
+
+- **Batch Loading**: First 100 contacts load immediately, rest load in background
+- **Undo Deletion**: 5-second window to undo any deletion
+- **Queue System**: Delete multiple contacts, undo all with one click
+- **Jump Navigation**: Type a number and jump directly to that contact
+- **Progress Indicator**: Shows current position and total contacts
+
+## Project Structure
+
+```plaintext
+contact-manager/
+├── app/
+│   ├── api/
+│   │   └── contacts/
+│   │       ├── route.ts          # GET contacts API
+│   │       └── [id]/route.ts     # DELETE/PATCH contact API
+│   ├── globals.css               # Tailwind styles
+│   ├── layout.tsx                # Root layout
+│   └── page.tsx                  # Main page component
+├── components/
+│   ├── ContactDisplay.tsx        # Contact card with editing
+│   ├── Navigation.tsx            # Navigation controls
+│   ├── Controls.tsx              # Delete/Skip buttons
+│   └── StatusMessage.tsx         # Status messages & undo
+├── get_contacts.scpt             # AppleScript to fetch contacts
+├── delete_contact.scpt           # AppleScript to delete contacts
+├── update_contact.scpt           # AppleScript to update contacts
+└── package.json
+```
+
+## AppleScript Integration
+
+The app uses three AppleScript files to interact with macOS Contacts:
+
+1. **get_contacts.scpt** - Fetches contacts with all details (name, company, phones, emails)
+2. **delete_contact.scpt** - Deletes a contact by ID
+3. **update_contact.scpt** - Updates contact name or phone
+
+## Development
+
+- Hot reload is enabled - any changes to files will update immediately
+- TypeScript provides type safety
+- Tailwind CSS for rapid UI development
+
+## Building for Production
+
+```bash
+npm run build
+npm start
+```
+
+## Tech Stack
+
+- **Next.js 14** - React framework with App Router
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Utility-first CSS
+- **AppleScript** - macOS Contacts integration
+
+## License
+
+MIT
